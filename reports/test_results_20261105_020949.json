@@ -1,0 +1,364 @@
+{
+  "metadata": {
+    "title": "Robot Shop Automated Test Suite (Phase E)",
+    "timestamp": "2026-11-05T01:09:49.802481+00:00",
+    "base_url": "http://172.24.0.2:32521",
+    "namespace": "robot-shop"
+  },
+  "summary": {
+    "total": 30,
+    "passed": 17,
+    "failed": 13,
+    "skipped": 0,
+    "pass_rate_pct": 56.67,
+    "latencies": {
+      "min_ms": 3.63,
+      "max_ms": 5007.36,
+      "mean_ms": 442.1,
+      "p50_ms": 85.0,
+      "p95_ms": 2203.37,
+      "p99_ms": 5007.36
+    },
+    "slo": {
+      "p95_target_ms": 2000.0,
+      "p95_actual_ms": 2203.37,
+      "p95_passed": false,
+      "health_target_ms": 1500.0,
+      "health_max_ms": 675.47,
+      "health_passed": true,
+      "overall_slo_passed": false
+    }
+  },
+  "test_cases": [
+    {
+      "id": "SMOKE-WEB",
+      "category": "Smoke",
+      "description": "Web Nginx Frontend root response",
+      "passed": true,
+      "latency_ms": 3.63,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Status: 200",
+      "timestamp": "2026-11-05T01:09:21.837564+00:00"
+    },
+    {
+      "id": "SMOKE-CART",
+      "category": "Smoke",
+      "description": "Cart service /health probe",
+      "passed": true,
+      "latency_ms": 544.0,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "App: OK",
+      "timestamp": "2026-11-05T01:09:22.382840+00:00"
+    },
+    {
+      "id": "SMOKE-CATALOGUE",
+      "category": "Smoke",
+      "description": "Catalogue service /health probe",
+      "passed": true,
+      "latency_ms": 675.47,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Mongo: True",
+      "timestamp": "2026-11-05T01:09:23.058643+00:00"
+    },
+    {
+      "id": "SMOKE-USER",
+      "category": "Smoke",
+      "description": "User service session generator (/uniqueid)",
+      "passed": true,
+      "latency_ms": 453.9,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "UUID: anonymous-14",
+      "timestamp": "2026-11-05T01:09:23.513251+00:00"
+    },
+    {
+      "id": "SMOKE-SHIPPING",
+      "category": "Smoke",
+      "description": "Shipping service codes endpoint (/codes)",
+      "passed": true,
+      "latency_ms": 492.73,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Returned 25 country codes",
+      "timestamp": "2026-11-05T01:09:24.016108+00:00"
+    },
+    {
+      "id": "SMOKE-ACTUATOR",
+      "category": "Smoke",
+      "description": "Shipping Spring Boot Actuator (/actuator/health)",
+      "passed": true,
+      "latency_ms": 186.28,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Status: UP",
+      "timestamp": "2026-11-05T01:09:24.204780+00:00"
+    },
+    {
+      "id": "SMOKE-PAYMENT",
+      "category": "Smoke",
+      "description": "Payment service /health probe",
+      "passed": true,
+      "latency_ms": 326.91,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Response: OK",
+      "timestamp": "2026-11-05T01:09:24.532095+00:00"
+    },
+    {
+      "id": "SMOKE-RATINGS",
+      "category": "Smoke",
+      "description": "Ratings service fetch probe (/fetch/Watson)",
+      "passed": true,
+      "latency_ms": 141.07,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Avg Rating: 0",
+      "timestamp": "2026-11-05T01:09:24.673430+00:00"
+    },
+    {
+      "id": "SMOKE-MYSQL",
+      "category": "Smoke",
+      "description": "MySQL database connectivity (mysqladmin ping)",
+      "passed": true,
+      "latency_ms": 85.0,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Ping: mysqld is alive",
+      "timestamp": "2026-11-05T01:09:26.287921+00:00"
+    },
+    {
+      "id": "SMOKE-REDIS",
+      "category": "Smoke",
+      "description": "Redis in-memory store connectivity (redis-cli ping)",
+      "passed": true,
+      "latency_ms": 35.0,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Ping: PONG",
+      "timestamp": "2026-11-05T01:09:26.876001+00:00"
+    },
+    {
+      "id": "SMOKE-MONGODB",
+      "category": "Smoke",
+      "description": "MongoDB document database ping (adminCommand)",
+      "passed": true,
+      "latency_ms": 65.0,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Result: { \"ok\" : 1 }",
+      "timestamp": "2026-11-05T01:09:32.058370+00:00"
+    },
+    {
+      "id": "SMOKE-RABBITMQ",
+      "category": "Smoke",
+      "description": "RabbitMQ AMQP messaging broker state",
+      "passed": true,
+      "latency_ms": 40.0,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Pod phase: Running",
+      "timestamp": "2026-11-05T01:09:32.657355+00:00"
+    },
+    {
+      "id": "SMOKE-DISPATCH",
+      "category": "Smoke",
+      "description": "Dispatch asynchronous order worker state",
+      "passed": true,
+      "latency_ms": 40.0,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Pod phase: Running",
+      "timestamp": "2026-11-05T01:09:33.332936+00:00"
+    },
+    {
+      "id": "E2E-01-SESSION",
+      "category": "E2E",
+      "description": "Session & anonymous user initiation",
+      "passed": true,
+      "latency_ms": 9.24,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "UUID assigned: anonymous-15",
+      "timestamp": "2026-11-05T01:09:33.343853+00:00"
+    },
+    {
+      "id": "E2E-02-CATEGORIES",
+      "category": "E2E",
+      "description": "Fetch product catalog categories",
+      "passed": false,
+      "latency_ms": 5007.36,
+      "slo_target_ms": 2000.0,
+      "slo_passed": false,
+      "details": "Categories: Failed",
+      "timestamp": "2026-11-05T01:09:38.351300+00:00"
+    },
+    {
+      "id": "E2E-03-PRODUCTS",
+      "category": "E2E",
+      "description": "Query complete product inventory",
+      "passed": false,
+      "latency_ms": 15.54,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Found 0 products",
+      "timestamp": "2026-11-05T01:09:38.367075+00:00"
+    },
+    {
+      "id": "E2E-04-DETAIL",
+      "category": "E2E",
+      "description": "Retrieve product details for SKU 'Watson'",
+      "passed": false,
+      "latency_ms": 77.72,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Name: None",
+      "timestamp": "2026-11-05T01:09:38.445297+00:00"
+    },
+    {
+      "id": "E2E-05-RATE",
+      "category": "E2E",
+      "description": "Submit 5-star customer rating for SKU 'Watson'",
+      "passed": false,
+      "latency_ms": 423.14,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Rating persisted in MySQL",
+      "timestamp": "2026-11-05T01:09:38.871049+00:00"
+    },
+    {
+      "id": "E2E-06-RATING-FETCH",
+      "category": "E2E",
+      "description": "Verify aggregate rating for SKU 'Watson'",
+      "passed": false,
+      "latency_ms": 196.33,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Avg: 0, Count: 0",
+      "timestamp": "2026-11-05T01:09:39.068304+00:00"
+    },
+    {
+      "id": "E2E-07-CART-ADD",
+      "category": "E2E",
+      "description": "Add 1 unit of SKU 'Watson' to cart for anonymous-15",
+      "passed": false,
+      "latency_ms": 204.72,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Cart total: None",
+      "timestamp": "2026-11-05T01:09:39.273397+00:00"
+    },
+    {
+      "id": "E2E-08-CART-GET",
+      "category": "E2E",
+      "description": "Retrieve cart contents from Redis for anonymous-15",
+      "passed": false,
+      "latency_ms": 11.03,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Item count: 0",
+      "timestamp": "2026-11-05T01:09:39.284759+00:00"
+    },
+    {
+      "id": "E2E-09-CART-UPDATE",
+      "category": "E2E",
+      "description": "Update item quantity to 2 units in cart",
+      "passed": false,
+      "latency_ms": 4.67,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Updated total: None",
+      "timestamp": "2026-11-05T01:09:39.289673+00:00"
+    },
+    {
+      "id": "E2E-10-SHIPPING-CALC",
+      "category": "E2E",
+      "description": "Calculate freight rate for destination city 10",
+      "passed": false,
+      "latency_ms": 614.26,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Shipping rate: None",
+      "timestamp": "2026-11-05T01:09:46.179116+00:00"
+    },
+    {
+      "id": "E2E-11-SHIPPING-CONFIRM",
+      "category": "E2E",
+      "description": "Attach confirmed shipping payload to cart for anonymous-15",
+      "passed": false,
+      "latency_ms": 1187.86,
+      "slo_target_ms": 2000.0,
+      "slo_passed": true,
+      "details": "Final total: None",
+      "timestamp": "2026-11-05T01:09:47.368365+00:00"
+    },
+    {
+      "id": "E2E-12-PAYMENT-ORDER",
+      "category": "E2E",
+      "description": "Process order checkout & payment for anonymous-15",
+      "passed": false,
+      "latency_ms": 2203.37,
+      "slo_target_ms": 2000.0,
+      "slo_passed": false,
+      "details": "Order generated: OK",
+      "timestamp": "2026-11-05T01:09:49.572556+00:00"
+    },
+    {
+      "id": "E2E-13-CLEANUP",
+      "category": "E2E",
+      "description": "Clean up test cart in Redis for session anonymous-15",
+      "passed": false,
+      "latency_ms": 94.67,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Test cart deleted via API",
+      "timestamp": "2026-11-05T01:09:49.667997+00:00"
+    },
+    {
+      "id": "NEG-01-EMPTY-PAYMENT",
+      "category": "Negative",
+      "description": "Reject empty-cart payment checkout (HTTP 400 expected)",
+      "passed": true,
+      "latency_ms": 34.53,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Status: 400, Message: 'cart not valid'",
+      "timestamp": "2026-11-05T01:09:49.704990+00:00"
+    },
+    {
+      "id": "NEG-02-INVALID-SKU",
+      "category": "Negative",
+      "description": "Handle non-existent product SKU lookup (HTTP 404 expected)",
+      "passed": false,
+      "latency_ms": 16.71,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Status: 500, Body: '{\"name\":\"MongoError\"}'",
+      "timestamp": "2026-11-05T01:09:49.722412+00:00"
+    },
+    {
+      "id": "NEG-03-NONEXISTENT-CART",
+      "category": "Negative",
+      "description": "Handle retrieval of non-existent cart safely",
+      "passed": true,
+      "latency_ms": 7.4,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Status: 404",
+      "timestamp": "2026-11-05T01:09:49.730238+00:00"
+    },
+    {
+      "id": "NEG-04-MISSING-SHIPPING",
+      "category": "Negative",
+      "description": "Reject payment without confirmed shipping charge",
+      "passed": true,
+      "latency_ms": 65.51,
+      "slo_target_ms": 1500.0,
+      "slo_passed": true,
+      "details": "Status: 400",
+      "timestamp": "2026-11-05T01:09:49.796505+00:00"
+    }
+  ]
+}

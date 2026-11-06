@@ -1,0 +1,459 @@
+{
+  "metadata": {
+    "timestamp": "2026-11-04T20:01:01.963575+00:00",
+    "namespace": "robot-shop",
+    "base_url": "http://127.0.0.1:8080"
+  },
+  "host": {
+    "wsl_total_mb": 4920,
+    "wsl_used_mb": 2793,
+    "wsl_available_mb": 1889,
+    "wsl_mem_percent": 56.8,
+    "docker_kind_cpu": "36.71%",
+    "docker_kind_mem": "2.485GiB / 4.805GiB"
+  },
+  "kubernetes": {
+    "node": {
+      "name": "capstone-cluster-control-plane",
+      "ready": true,
+      "conditions": {
+        "MemoryPressure": "False",
+        "DiskPressure": "False",
+        "PIDPressure": "False",
+        "Ready": "True"
+      },
+      "kubelet_version": "v1.32.2",
+      "os_image": "Debian GNU/Linux 12 (bookworm)",
+      "container_runtime": "containerd://2.0.2"
+    },
+    "pods": [
+      {
+        "name": "cart-5dd7b45686-p58dg",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 15,
+        "restarts_new": 0,
+        "ip": "10.244.0.3",
+        "start_time": "2026-10-30T09:57:20Z"
+      },
+      {
+        "name": "catalogue-857b648bc7-h92ns",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 15,
+        "restarts_new": 0,
+        "ip": "10.244.0.15",
+        "start_time": "2026-10-30T09:57:20Z"
+      },
+      {
+        "name": "dispatch-86747877df-n9mvr",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 23,
+        "restarts_new": 0,
+        "ip": "10.244.0.13",
+        "start_time": "2026-10-30T09:57:20Z"
+      },
+      {
+        "name": "mongodb-69d9cf5747-57mbh",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 15,
+        "restarts_new": 0,
+        "ip": "10.244.0.7",
+        "start_time": "2026-10-30T09:57:20Z"
+      },
+      {
+        "name": "mysql-76d977dbd7-cp4hm",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 6,
+        "restarts_new": 0,
+        "ip": "10.244.0.5",
+        "start_time": "2026-11-04T01:07:41Z"
+      },
+      {
+        "name": "payment-7cbd77fbb9-mjbqn",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 15,
+        "restarts_new": 0,
+        "ip": "10.244.0.16",
+        "start_time": "2026-10-30T09:57:20Z"
+      },
+      {
+        "name": "rabbitmq-876447689-rhfx8",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 16,
+        "restarts_new": 0,
+        "ip": "10.244.0.12",
+        "start_time": "2026-10-30T09:57:21Z"
+      },
+      {
+        "name": "ratings-7897d69b9b-8jcvr",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 9,
+        "restarts_new": 0,
+        "ip": "10.244.0.9",
+        "start_time": "2026-11-04T01:07:40Z"
+      },
+      {
+        "name": "redis-0",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 15,
+        "restarts_new": 0,
+        "ip": "10.244.0.19",
+        "start_time": "2026-10-30T09:57:28Z"
+      },
+      {
+        "name": "shipping-6949d9fb5f-rwdgn",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 7,
+        "restarts_new": 0,
+        "ip": "10.244.0.21",
+        "start_time": "2026-11-04T01:07:41Z"
+      },
+      {
+        "name": "user-75b5559997-p8drl",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 17,
+        "restarts_new": 0,
+        "ip": "10.244.0.20",
+        "start_time": "2026-10-30T09:57:20Z"
+      },
+      {
+        "name": "web-7649bf4886-rd47v",
+        "phase": "Running",
+        "ready": true,
+        "ready_fraction": "1/1",
+        "restarts_total": 35,
+        "restarts_new": 0,
+        "ip": "10.244.0.8",
+        "start_time": "2026-10-30T09:57:21Z"
+      }
+    ],
+    "deployments": [
+      {
+        "name": "cart",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "catalogue",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "dispatch",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "mongodb",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "mysql",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "payment",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "rabbitmq",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "ratings",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "shipping",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "user",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      },
+      {
+        "name": "web",
+        "desired": 1,
+        "ready": 1,
+        "available": 1,
+        "healthy": true
+      }
+    ],
+    "endpoints": [
+      {
+        "service": "cart",
+        "ready_ips": [
+          "10.244.0.3"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "catalogue",
+        "ready_ips": [
+          "10.244.0.15"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "dispatch",
+        "ready_ips": [
+          "10.244.0.13"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "mongodb",
+        "ready_ips": [
+          "10.244.0.7"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "mysql",
+        "ready_ips": [
+          "10.244.0.5"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "payment",
+        "ready_ips": [
+          "10.244.0.16"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "rabbitmq",
+        "ready_ips": [
+          "10.244.0.12"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "ratings",
+        "ready_ips": [
+          "10.244.0.9"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "redis",
+        "ready_ips": [
+          "10.244.0.19"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "shipping",
+        "ready_ips": [
+          "10.244.0.21"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "user",
+        "ready_ips": [
+          "10.244.0.20"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      },
+      {
+        "service": "web",
+        "ready_ips": [
+          "10.244.0.8"
+        ],
+        "not_ready_ips": [],
+        "has_active_endpoints": true
+      }
+    ],
+    "storage": {
+      "data-redis-0": {
+        "name": "data-redis-0",
+        "status": "Bound",
+        "bound": true,
+        "volume": "pvc-8841f097-362e-4f6c-b8aa-f181863ab842",
+        "capacity": "1Gi",
+        "storage_class": "standard"
+      }
+    }
+  },
+  "databases": {
+    "mysql": {
+      "available": true,
+      "ping": "ALIVE",
+      "uptime_seconds": 15464,
+      "threads": 11,
+      "questions": 15396,
+      "slow_queries": 0,
+      "qps": 0.995
+    },
+    "redis": {
+      "available": true,
+      "ping": "PONG",
+      "version": "4.0.6",
+      "uptime_seconds": 17074,
+      "connected_clients": 3,
+      "used_memory_human": "850.27K",
+      "mem_fragmentation_ratio": 3.98,
+      "rdb_last_status": "ok",
+      "total_commands": 14,
+      "ops_per_sec": 0
+    }
+  },
+  "applications": {
+    "http_probes": [
+      {
+        "name": "Web Frontend",
+        "path": "/",
+        "status_code": 200,
+        "latency_ms": 5.9,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "Cart Health",
+        "path": "/api/cart/health",
+        "status_code": 200,
+        "latency_ms": 9.45,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "Catalogue Health",
+        "path": "/api/catalogue/health",
+        "status_code": 200,
+        "latency_ms": 5.41,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "User UniqueID",
+        "path": "/api/user/uniqueid",
+        "status_code": 200,
+        "latency_ms": 10.07,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "Shipping Codes",
+        "path": "/api/shipping/codes",
+        "status_code": 200,
+        "latency_ms": 28.12,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "Payment Health",
+        "path": "/api/payment/health",
+        "status_code": 200,
+        "latency_ms": 4.89,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "Cart Metrics",
+        "path": "/api/cart/metrics",
+        "status_code": 200,
+        "latency_ms": 5.16,
+        "success": true,
+        "error": null
+      },
+      {
+        "name": "Payment Metrics",
+        "path": "/api/payment/metrics",
+        "status_code": 200,
+        "latency_ms": 6.5,
+        "success": true,
+        "error": null
+      }
+    ],
+    "prometheus_metrics": {
+      "cart": {
+        "items_added": 0.0
+      },
+      "payment": {
+        "sold_count_total": 0.0,
+        "units_sold_count": 0.0,
+        "cart_value_count": 0.0
+      }
+    },
+    "shipping_actuator": {
+      "status": "UP",
+      "raw": {
+        "status": "UP",
+        "groups": [
+          "liveness",
+          "readiness"
+        ]
+      }
+    }
+  },
+  "logs": [],
+  "alerts": [],
+  "summary": {
+    "healthy": true,
+    "critical_count": 0,
+    "warning_count": 0,
+    "total_pods": 12,
+    "ready_pods": 12
+  }
+}

@@ -1,0 +1,194 @@
+# ==============================================================================
+# Robot Shop Observability - Alerting Infrastructure: Prometheus Rules & Alertmanager
+# DevOps Capstone 2 - Keep It Running (Stan's Robot Shop)
+# Component: SLO breach alerts, container restart detection, Slack webhook route
+# Supports both:
+#   1. Standalone Prometheus ConfigMap (native K8s, zero CRD dependency)
+#   2. Prometheus Operator PrometheusRule CRD
+# ==============================================================================
+
+---
+# ------------------------------------------------------------------------------
+# 1. Standalone Prometheus Alerting Rules (ConfigMap - Native K8s Compatible)
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: robot-shop-alert-rules
+  namespace: robot-shop
+  labels:
+    role: alert-rules
+    app.kubernetes.io/part-of: robot-shop-observability
+data:
+  robot-shop-alerts.yaml: |
+    groups:
+      - name: robot-shop.slo.rules
+        rules:
+          # Fast Burn: 14.4x burn rate (2% error budget consumed in 1 hour)
+          - alert: RobotShopAvailabilityBreachCritical
+            expr: |
+              (
+                sum(rate(http_requests_total{namespace="robot-shop",status=~"5.."}[1h]))
+                /
+                sum(rate(http_requests_total{namespace="robot-shop"}[1h]))
+              ) > (14.4 * (1 - 0.99))
+              and
+              (
+                sum(rate(http_requests_total{namespace="robot-shop",status=~"5.."}[5m]))
+                /
+                sum(rate(http_requests_total{namespace="robot-shop"}[5m]))
+              ) > (14.4 * (1 - 0.99))
+            for: 2m
+            labels:
+              severity: critical
+              tier: frontend
+              sli: availability
+            annotations:
+              summary: "Critical Error Budget Burn: Robot Shop availability below 99% (14.4x burn rate)"
+              description: "High error rate detected across Robot Shop services. Consuming 2% of 30-day error budget in 1 hour. Current availability has breached the 99.0% SLO target."
+              runbook_url: "https://github.com/Yemmmyc/robot-shop/blob/master/RUNBOOK.md#robotshopavailabilitybreach"
+
+          # Slow Burn: 6x burn rate (5% error budget consumed in 6 hours)
+          - alert: RobotShopAvailabilityBreachWarning
+            expr: |
+              (
+                sum(rate(http_requests_total{namespace="robot-shop",status=~"5.."}[6h]))
+                /
+                sum(rate(http_requests_total{namespace="robot-shop"}[6h]))
+              ) > (6 * (1 - 0.99))
+              and
+              (
+                sum(rate(http_requests_total{namespace="robot-shop",status=~"5.."}[30m]))
+                /
+                sum(rate(http_requests_total{namespace="robot-shop"}[30m]))
+              ) > (6 * (1 - 0.99))
+            for: 15m
+            labels:
+              severity: warning
+              tier: frontend
+              sli: availability
+            annotations:
+              summary: "Warning: Elevated Error Budget Burn: Robot Shop availability degrading (6x burn rate)"
+              description: "Persistent error rate detected across Robot Shop services. Consuming 5% of 30-day error budget in 6 hours."
+              runbook_url: "https://github.com/Yemmmyc/robot-shop/blob/master/RUNBOOK.md#robotshopavailabilitybreach"
+
+      - name: robot-shop.workload.rules
+        rules:
+          # High HTTP 5xx Error Rate (> 1% of traffic failing)
+          - alert: HighHttpErrorRate
+            expr: |
+              (
+                sum by (service) (rate(http_requests_total{namespace="robot-shop",status=~"5.."}[5m]))
+                /
+                sum by (service) (rate(http_requests_total{namespace="robot-shop"}[5m]))
+              ) > 0.01
+            for: 3m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Service {{ $labels.service }} experiencing > 1% HTTP 5xx errors"
+              description: "The HTTP 5xx error rate for service {{ $labels.service }} exceeds the 1% failure budget threshold."
+              runbook_url: "https://github.com/Yemmmyc/robot-shop/blob/master/RUNBOOK.md#higherrorrate"
+
+          # Container Restart Spike (> 2 restarts within 15 minutes)
+          - alert: ContainerRestartSpike
+            expr: |
+              sum by (pod, container, namespace) (increase(kube_pod_container_status_restarts_total{namespace="robot-shop"}[15m])) > 2
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Container restart spike detected in pod {{ $labels.pod }}"
+              description: "Container {{ $labels.container }} in pod {{ $labels.pod }} restarted {{ $value }} times within the last 15 minutes."
+              runbook_url: "https://github.com/Yemmmyc/robot-shop/blob/master/RUNBOOK.md#containerrestartspike"
+
+          # Critical Microservice Down / Unready
+          - alert: CriticalServicePodNotReady
+            expr: |
+              kube_pod_status_ready{namespace="robot-shop",condition="true"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.pod }} is not ready"
+              description: "Pod {{ $labels.pod }} in namespace robot-shop has been in an unready state for more than 2 minutes."
+              runbook_url: "https://github.com/Yemmmyc/robot-shop/blob/master/RUNBOOK.md#podnotready"
+
+          # Datastore Availability
+          - alert: DatastoreUnavailable
+            expr: |
+              (kube_deployment_status_replicas_available{namespace="robot-shop",deployment=~"mysql|mongodb|rabbitmq"} == 0)
+              or
+              (kube_statefulset_status_replicas_ready{namespace="robot-shop",statefulset="redis"} == 0)
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Core datastore {{ $labels.deployment }}{{ $labels.statefulset }} is unavailable"
+              description: "Zero ready replicas for essential datastore {{ $labels.deployment }}{{ $labels.statefulset }}."
+              runbook_url: "https://github.com/Yemmmyc/robot-shop/blob/master/RUNBOOK.md#datastoreunavailable"
+
+---
+# ------------------------------------------------------------------------------
+# 2. Alertmanager Configuration with Slack Webhook Routing
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yaml: |
+    global:
+      resolve_timeout: 5m
+      # NOTE: slack_api_url_file references a Kubernetes Secret mounted into Alertmanager.
+      # In production, create secret 'alertmanager-slack-webhook' with key 'slack-webhook-url'.
+      # For local testing, alerts are routed internally without external network egress.
+      slack_api_url_file: /etc/alertmanager/secrets/slack-webhook-url
+
+    route:
+      group_by: ['alertname', 'cluster', 'service', 'namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: 'slack-notifications'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'slack-critical'
+          repeat_interval: 1h
+        - match:
+            severity: warning
+          receiver: 'slack-notifications'
+          repeat_interval: 4h
+
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'namespace', 'service']
+
+    receivers:
+      - name: 'slack-notifications'
+        slack_configs:
+          - channel: '#devops-alerts'
+            send_resolved: true
+            icon_emoji: ':warning:'
+            title: '{{ template "slack.robot_shop.title" . }}'
+            text: '{{ template "slack.robot_shop.text" . }}'
+
+      - name: 'slack-critical'
+        slack_configs:
+          - channel: '#devops-alerts'
+            send_resolved: true
+            icon_emoji: ':fire:'
+            title: '[CRITICAL SEV-1] {{ .CommonAnnotations.summary }}'
+            text: |
+              *Cluster:* capstone-cluster | *Namespace:* {{ .CommonLabels.namespace }}
+              *Severity:* CRITICAL
+              *Alert:* {{ .CommonLabels.alertname }}
+              *Details:* {{ .CommonAnnotations.description }}
+              *Runbook:* <{{ .CommonAnnotations.runbook_url }}|Open SRE Runbook>

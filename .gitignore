@@ -3,3 +3,13 @@
 *-private.*
 vendor/
 Gopkg.lock
+
+# Database & Control Plane Backups (Exclude raw SQL dumps and binary etcd snapshots)
+backups/
+*.sql
+*.db
+k8s-live-backup-*.yaml
+K8s/helm.backup*/
+
+# Scratch scripts and temporary test files
+scratch/

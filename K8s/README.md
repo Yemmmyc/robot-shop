@@ -40,3 +40,13 @@ $ kubectl -n istio-system get svc istio-ingressgateway
 The above will display the IP address of the Istio gateway.
 
 **NOTE** The Instana agent only works with later versions of Istio.
+
+## Windows & WSL Local Access (Kind)
+
+When running on a local Kind cluster (`capstone-cluster`) inside WSL2, access Robot Shop from Windows browsers at:
+
+👉 **[http://localhost:8080](http://localhost:8080)**
+
+Traffic is dynamically bridged from WSL `127.0.0.1:8080` to the Kind control-plane container NodePort (`32521`) via the systemd service `robot-shop-bridge.service`.
+
+For full architecture details, service commands, and troubleshooting, see [ACCESS_GUIDE.md](../ACCESS_GUIDE.md).

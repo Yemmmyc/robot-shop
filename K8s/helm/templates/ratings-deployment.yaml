@@ -36,6 +36,7 @@ spec:
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
+          timeoutSeconds: 5
           failureThreshold: 30
           successThreshold: 1
       restartPolicy: Always

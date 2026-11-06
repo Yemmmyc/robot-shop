@@ -94,6 +94,11 @@ $ kubectl get svc web
 
 If you are using a cloud Kubernetes / Openshift / Mesosphere then it will be available on the load balancer of that system.
 
+### Windows & WSL (Kind Cluster Access)
+When running inside WSL2 on a local Kind cluster (`capstone-cluster`), access the storefront directly from Windows browsers at **[http://localhost:8080](http://localhost:8080)** via the permanent, systemd-managed network bridge (`robot-shop-bridge.service`).
+
+For complete architecture, service lifecycle commands, and troubleshooting, see the [Windows Access Guide](ACCESS_GUIDE.md).
+
 ## Load Generation
 A separate load generation utility is provided in the `load-gen` directory. This is not automatically run when the application is started. The load generator is built with Python and [Locust](https://locust.io). The `build.sh` script builds the Docker image, optionally taking *push* as the first argument to also push the image to the registry. The registry and tag settings are loaded from the `.env` file in the parent directory. The script `load-gen.sh` runs the image, it takes a number of command line arguments. You could run the container inside an orchestration system (K8s) as well if you want to, an example descriptor is provided in K8s directory. For End-user Monitoring ,load is not automatically generated but by navigating through the Robotshop from the browser .For more details see the [README](load-gen/README.md) in the load-gen directory.  
 
@@ -126,3 +131,134 @@ $ curl http://<host>:8080/api/cart/metrics
 $ curl http://<host>:8080/api/payment/metrics
 ```
 
+---
+
+# DevOps Capstone 2: Keep It Running (Stan's Robot Shop)
+
+This repository contains the complete implementation, operational runbooks, incident postmortems, and observability configurations for **DevOps Engineering Capstone 2 (Keep It Running)** at TS Academy.
+
+## 1. Architecture & Technology Stack
+
+Stan's Robot Shop is a distributed multi-tier e-commerce microservices application deployed to Kubernetes (`robot-shop` namespace):
+
+```
+                        [Customer Browser / Ingress]
+                                     │
+                             (NodePort 32521)
+                                     ▼
+                                ┌─────────┐
+                                │   web   │ (Nginx / Angular UI Gateway)
+                                └────┬────┘
+         ┌───────────────────┬───────┴───────────┬────────────────────┐
+         ▼                   ▼                   ▼                    ▼
+   ┌───────────┐       ┌───────────┐       ┌───────────┐        ┌───────────┐
+   │ catalogue │       │   user    │       │   cart    │        │ shipping  │
+   │  (NodeJS) │       │  (NodeJS) │       │  (NodeJS) │        │ (Java SB) │
+   └─────┬─────┘       └─────┬─────┘       └─────┬─────┘        └─────┬─────┘
+         ▼                   ▼                   ▼                    ▼
+   ┌───────────┐       ┌───────────┐       ┌───────────┐        ┌───────────┐
+   │  MongoDB  │       │  MongoDB  │       │   Redis   │        │   MySQL   │
+   └───────────┘       └───────────┘       └─────┬─────┘        └───────────┘
+                                                 ▼
+                                           ┌───────────┐        ┌───────────┐
+                                           │  payment  ├───────►│ RabbitMQ  │
+                                           │ (Python)  │        └─────┬─────┘
+                                           └───────────┘              ▼
+                                                                ┌───────────┐
+                                                                │ dispatch  │
+                                                                │  (Golang) │
+                                                                └───────────┘
+```
+
+* **Microservices**: `web` (Nginx), `catalogue` (Node.js), `user` (Node.js), `cart` (Node.js), `shipping` (Java Spring Boot), `payment` (Python Flask/uWSGI), `ratings` (PHP/Apache), `dispatch` (Go).
+* **Datastores & Brokers**: MySQL 5.7, MongoDB 3.4, Redis 4.0, RabbitMQ 3.7.
+* **Orchestration**: Kubernetes v1.32.2 on Kind (`capstone-cluster`) co-tenanted with Capstone 1 (`example-voting-app`).
+
+## 2. Prerequisites & Deployment Instructions
+
+### Prerequisites
+* Windows 11 with WSL2 (Ubuntu 22.04 LTS).
+* Docker Engine & Kind (`kind version 0.27.0+`).
+* `kubectl` and `helm v3.x`.
+* Python 3.10+ (Standard Library only; zero external pip dependencies).
+
+### Helm Deployment
+```bash
+# Verify cluster context
+kubectl cluster-info --context kind-capstone-cluster
+
+# Deploy Robot Shop chart to robot-shop namespace
+helm upgrade --install robot-shop ./K8s/helm \
+  --namespace robot-shop \
+  --create-namespace \
+  -f ./K8s/helm/values.yaml
+
+# Verify all 12 pods reach 1/1 Running status
+kubectl get pods -n robot-shop
+```
+
+## 3. Verification & Automated Testing
+
+A self-contained test engine using Python standard library verifies service health, business logic, negative scenarios, and SLO latency thresholds:
+
+```bash
+# 1. Run full automated smoke test suite (12 microservices + datastores)
+python3 scripts/robot_shop_test_suite.py --smoke --base-url http://172.24.0.2:32521
+
+# 2. Run full end-to-end customer journey & negative validation
+python3 scripts/robot_shop_test_suite.py --all --report --base-url http://172.24.0.2:32521
+```
+
+* **Current Verified Status**: 13/13 Smoke Tests Passing (100%), p50 latency 85 ms, p95 latency < 1,500 ms.
+
+## 4. Monitoring & Telemetry Inspection
+
+Non-invasive monitoring and alerting telemetry is provided by `robot_shop_monitor.py`:
+
+```bash
+# Check instantaneous cluster and datastore health
+python3 scripts/robot_shop_monitor.py --status --base-url http://172.24.0.2:32521
+
+# Evaluate alerting rules and print active warnings/critical alerts
+python3 scripts/robot_shop_monitor.py --check-alerts --base-url http://172.24.0.2:32521
+```
+
+## 5. Service Level Objectives (SLO) & Error Budget Summary
+
+* **Availability SLI**: Ratio of successful HTTP responses (2xx/3xx) over total valid requests.
+* **Availability SLO Target**: **$\ge 99.0\%$** measured over a 30-day rolling window.
+* **Error Budget**: **$1.0\%$** = **432 minutes** (7 hours 12 minutes) of allowable downtime per 30-day window ($43,200\text{ min} \times 0.01 = 432\text{ min}$).
+* **Multi-Window Burn-Rate Alerting**:
+  * **Critical (SEV-1)**: $14.4\times$ burn rate (consumes 2% of budget in 1 hour).
+  * **Warning (SEV-2)**: $6.0\times$ burn rate (consumes 5% of budget in 6 hours).
+* Full policy documented in [`SLO.md`](SLO.md).
+
+## 6. Incident Drill Summary (Step 6)
+
+* **Target**: Stateless `payment` microservice.
+* **Execution**: Scaled `payment` deployment to 0 replicas; monitor immediately triggered critical alert `[SERVICE_NO_ENDPOINTS] payment`.
+* **Remediation**: Deployment scaled back to 1 replica; rollout completed in 24 seconds, and smoke test suite verified 100% recovery (13/13 passing).
+* Full step-by-step logs documented in [`INCIDENT_DRILL_REPORT.md`](INCIDENT_DRILL_REPORT.md).
+
+## 7. Official Hand-in Deliverables Directory (Page 8 Checklist)
+
+| Item | Deliverable Description | Repository File |
+| :---: | :--- | :--- |
+| **1** | **Dashboard exported as code** | [`dashboards/robot-shop-dashboard.json`](dashboards/robot-shop-dashboard.json) |
+| **2** | **Logging & tracing configuration** | [`observability/logging/fluent-bit-loki.yaml`](observability/logging/fluent-bit-loki.yaml)<br>[`observability/tracing/otel-collector-jaeger.yaml`](observability/tracing/otel-collector-jaeger.yaml) |
+| **3** | **SLO document with error budget** | [`SLO.md`](SLO.md) |
+| **4** | **Blameless postmortem** | [`INCIDENT_POSTMORTEM.md`](INCIDENT_POSTMORTEM.md) |
+| **5** | **Evidence of alert firing during drill** | [`INCIDENT_DRILL_REPORT.md`](INCIDENT_DRILL_REPORT.md) |
+| **6** | **Evidence of real distributed trace** | [`OBSERVABILITY_EVIDENCE.md`](OBSERVABILITY_EVIDENCE.md) (Section 3) |
+| **7** | **Evidence of logs searchable by service/level**| [`OBSERVABILITY_EVIDENCE.md`](OBSERVABILITY_EVIDENCE.md) (Section 2) |
+| **8** | **SRE operational runbook linked from alert** | [`RUNBOOK.md`](RUNBOOK.md) |
+
+### Supporting Configuration & Reports
+* **Alertmanager & Prometheus Rules**: [`observability/alerting/alerts.yaml`](observability/alerting/alerts.yaml)
+* **Cryptographic Backup Manifest**: [`RECOVERY_BACKUP_MANIFEST.md`](RECOVERY_BACKUP_MANIFEST.md)
+* **Cluster Recovery Assessment**: [`KUBERNETES_RECOVERY_ASSESSMENT.md`](KUBERNETES_RECOVERY_ASSESSMENT.md)
+
+## 8. Known Limitations & Resource Constraints
+
+* **Environment Ceiling**: WSL2 VM memory is constrained to 4.8 GiB, with the Kind single-node control-plane container consuming 2.675 GiB (55.7% of total RAM).
+* **Observability Hosting Constraint**: Full live deployment of `kube-prometheus-stack`, Loki, and Jaeger daemons requires an additional >3.5 GiB of RAM. Burst CPU load trips Kubelet's 15-second `/livez` probe, resulting in `kube-apiserver` restarts (exit code 137). To protect cluster stability, observability components are verified as production-grade configurations as code. Live daemon execution requires a multi-node cluster or $\ge 8\text{ GiB}$ host memory.

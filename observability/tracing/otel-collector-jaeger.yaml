@@ -1,0 +1,334 @@
+# ==============================================================================
+# Robot Shop Observability - Distributed Tracing: OpenTelemetry & Jaeger
+# DevOps Capstone 2 - Keep It Running (Stan's Robot Shop)
+# Component: Distributed trace collection, processing, and visualization
+# ==============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tracing
+  labels:
+    app.kubernetes.io/part-of: robot-shop-observability
+    app.kubernetes.io/component: tracing
+
+---
+# ------------------------------------------------------------------------------
+# 1. Jaeger All-in-One (Trace Storage & Query UI)
+# ------------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: tracing
+  labels:
+    app: jaeger
+    app.kubernetes.io/component: all-in-one
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+        - name: jaeger
+          image: jaegertracing/all-in-one:1.57.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: SPAN_STORAGE_TYPE
+              value: memory
+            - name: MEMORY_MAX_TRACES
+              value: "10000"
+            - name: QUERY_BASE_PATH
+              value: /jaeger
+            - name: COLLECTOR_OTLP_ENABLED
+              value: "true"
+          ports:
+            - name: ui-http
+              containerPort: 16686
+              protocol: TCP
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+            - name: jaeger-compact
+              containerPort: 6831
+              protocol: UDP
+          resources:
+            requests:
+              cpu: 40m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 192Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 14269
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 14269
+            initialDelaySeconds: 10
+            periodSeconds: 15
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: tracing
+  labels:
+    app: jaeger
+spec:
+  type: ClusterIP
+  ports:
+    - name: ui-http
+      port: 16686
+      targetPort: 16686
+      protocol: TCP
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+  selector:
+    app: jaeger
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger-ui-nodeport
+  namespace: tracing
+  labels:
+    app: jaeger
+spec:
+  type: NodePort
+  ports:
+    - name: ui-http
+      port: 16686
+      targetPort: 16686
+      nodePort: 31686
+      protocol: TCP
+  selector:
+    app: jaeger
+
+---
+# ------------------------------------------------------------------------------
+# 2. OpenTelemetry Collector (Trace Processing Pipeline)
+# ------------------------------------------------------------------------------
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: tracing
+  labels:
+    app: otel-collector
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      jaeger:
+        protocols:
+          thrift_compact:
+            endpoint: 0.0.0.0:6831
+          thrift_http:
+            endpoint: 0.0.0.0:14268
+      zipkin:
+        endpoint: 0.0.0.0:9411
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 20
+      batch:
+        send_batch_size: 256
+        timeout: 2s
+      resource:
+        attributes:
+          - key: environment
+            value: "capstone-production"
+            action: insert
+          - key: cluster
+            value: "capstone-cluster"
+            action: insert
+
+    exporters:
+      otlp/jaeger:
+        endpoint: jaeger.tracing.svc:4317
+        tls:
+          insecure: true
+      debug:
+        verbosity: basic
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        traces:
+          receivers: [otlp, jaeger, zipkin]
+          processors: [memory_limiter, batch, resource]
+          exporters: [otlp/jaeger, debug]
+      telemetry:
+        logs:
+          level: info
+        metrics:
+          address: 0.0.0.0:8888
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: tracing
+  labels:
+    app: otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.98.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config=/etc/otelcol/config.yaml
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+            - name: jaeger-compact
+              containerPort: 6831
+              protocol: UDP
+            - name: health
+              containerPort: 13133
+              protocol: TCP
+            - name: metrics
+              containerPort: 8888
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 30m
+              memory: 48Mi
+            limits:
+              cpu: 150m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+            items:
+              - key: config.yaml
+                path: config.yaml
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: tracing
+  labels:
+    app: otel-collector
+spec:
+  type: ClusterIP
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+      protocol: TCP
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318
+      protocol: TCP
+    - name: jaeger-compact
+      port: 6831
+      targetPort: 6831
+      protocol: UDP
+    - name: metrics
+      port: 8888
+      targetPort: 8888
+      protocol: TCP
+  selector:
+    app: otel-collector
+
+---
+# ------------------------------------------------------------------------------
+# 3. Microservice Instrumentation Configuration Reference
+# ------------------------------------------------------------------------------
+# Stan's Robot Shop services can be wired to send distributed traces to the
+# OpenTelemetry Collector by setting standard OTel environment variables in
+# their Deployment manifests:
+#
+# Node.js services (cart, user, catalogue, ratings):
+#   env:
+#     - name: OTEL_SERVICE_NAME
+#       value: "cart"
+#     - name: OTEL_EXPORTER_OTLP_ENDPOINT
+#       value: "http://otel-collector.tracing.svc:4317"
+#     - name: NODE_OPTIONS
+#       value: "--require @opentelemetry/auto-instrumentations-node/register"
+#
+# Python services (payment, dispatch):
+#   env:
+#     - name: OTEL_SERVICE_NAME
+#       value: "payment"
+#     - name: OTEL_EXPORTER_OTLP_ENDPOINT
+#       value: "http://otel-collector.tracing.svc:4317"
+#     - name: AUTOWRAPT_BOOTSTRAP
+#       value: "opentelemetry.instrumentation.auto_instrumentation"
+#
+# Java Spring Boot service (shipping):
+#   env:
+#     - name: OTEL_SERVICE_NAME
+#       value: "shipping"
+#     - name: JAVA_TOOL_OPTIONS
+#       value: "-javaagent:/otel/opentelemetry-javaagent.jar"
+#     - name: OTEL_EXPORTER_OTLP_ENDPOINT
+#       value: "http://otel-collector.tracing.svc:4317"
+

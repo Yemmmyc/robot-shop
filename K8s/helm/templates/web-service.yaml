@@ -9,6 +9,9 @@ spec:
   - name: http
     port: 8080
     targetPort: 8080
+    {{ if .Values.nodeport }}
+    nodePort: {{ .Values.web.nodePort | default 32521 }}
+    {{ end }}
   selector:
     service: web
   {{ if .Values.nodeport }}

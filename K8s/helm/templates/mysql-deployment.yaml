@@ -34,6 +34,17 @@ spec:
           requests:
             cpu: 100m
             memory: 700Mi
+        readinessProbe:
+          exec:
+            command:
+            - mysqladmin
+            - ping
+            - -h
+            - 127.0.0.1
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 10
       restartPolicy: Always
       {{- with .Values.mysql.affinity }}
       affinity:
